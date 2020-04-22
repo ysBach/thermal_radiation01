@@ -1,4 +1,5 @@
 data/*.nc
+data/*.tar.gz
 .DS_Store*
 
 # Byte-compiled / optimized / DLL files
