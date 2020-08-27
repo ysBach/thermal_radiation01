@@ -140,14 +140,18 @@ def set_spl(fpath=EPHEMPATH):
                 alpha=spl_alpha)
 
 
-def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180,
+def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180, ti_rh_correct=False,
                  fpath=EPHEMPATH):
+    spl = set_spl()
+    r_hel = spl["rh"](true_anom)
+    if ti_rh_correct:
+        ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
+        
     # Just in case it is in -180~+180 notation:
     true_anom = wrap_180180_to_000360(true_anom)
-    spl = set_spl()
     sb = tm.SmallBody()
     sb.id = 3200
-    sb.set_ecl(r_hel=spl["rh"](true_anom),
+    sb.set_ecl(r_hel=r_hel,
                hel_ecl_lon=spl["hlon"](true_anom),
                hel_ecl_lat=spl["hlat"](true_anom),
                r_obs=spl["ro"](true_anom),  # dummy....
@@ -169,12 +173,18 @@ def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180,
     return sb
 
 
-def set_phaethon_up(true_anom=0, ti=600, nlon=360, nlat=180,
+def set_phaethon_up(true_anom=0, ti=600, nlon=360, nlat=180, ti_rh_correct=False,
                     fpath=EPHEMPATH):
     spl = set_spl()
+    r_hel = spl["rh"](true_anom)
+    if ti_rh_correct:
+        ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
+        
+    # Just in case it is in -180~+180 notation:
+    true_anom = wrap_180180_to_000360(true_anom)
     sb = tm.SmallBody()
     sb.id = 3200
-    sb.set_ecl(r_hel=spl["rh"](true_anom),
+    sb.set_ecl(r_hel=r_hel,
                hel_ecl_lon=spl["hlon"](true_anom),
                hel_ecl_lat=spl["hlat"](true_anom),
                r_obs=spl["ro"](true_anom),  # dummy....
@@ -196,9 +206,12 @@ def set_phaethon_up(true_anom=0, ti=600, nlon=360, nlat=180,
     return sb
 
 
-def set_perpmodel(diam_eff, rot_period, r_hel=0.2,
+def set_perpmodel(diam_eff, rot_period, r_hel=0.2, ti_rh_correct=False,
                   a_bond=0.1, ti=200, bulk_mass_den=2000, emissivity=0.90,
                   nlon=360, nlat=180):
+    if ti_rh_correct:
+        ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
+
     dummies = dict(r_obs=1, obs_ecl_lon=0, obs_ecl_lat=0, alpha=0)
 
     sb = tm.SmallBody()
@@ -212,9 +225,11 @@ def set_perpmodel(diam_eff, rot_period, r_hel=0.2,
     return sb
 
 
-def set_model_aspect(diam_eff, rot_period, aspect_deg=90, r_hel=0.2,
+def set_model_aspect(diam_eff, rot_period, aspect_deg=90, r_hel=0.2, ti_rh_correct=False,
                      a_bond=0.1, ti=200, bulk_mass_den=2000, emissivity=0.90,
                      nlon=360, nlat=180):
+    if ti_rh_correct:
+        ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
     dummies = dict(r_obs=1, obs_ecl_lon=0, obs_ecl_lat=0, alpha=0)
 
     sb = tm.SmallBody()
@@ -281,7 +296,8 @@ def calc_traj(chem, radius, sb, init_th, init_ph, max_h_step, nstep=None,
                 t_last = particle.trace_time[-1]
 
                 # vel_x > vel_esc && pos_x > 0 (night hemisphere)
-                if (vel_last[0] > vel_esc) and (pos_last[0] > 0):
+                # if (vel_last[0] > vel_esc) and (pos_last[0] > 0):
+                if np.linalg.norm(vel_last*pos_last)/np.linalg.norm(pos_last) > vel_esc:
                     halt_code_str_2 = 'escape'
                     # particle.halt_code_str = 'escape'
                     break
