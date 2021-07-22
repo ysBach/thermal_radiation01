@@ -2,6 +2,10 @@
 
 **nbviewer [here](https://nbviewer.jupyter.org/github/ysbach/thermal_radiation01/tree/master/).**
 
+This is a repo related to the following work:
+
+> Bach, Y. P. & Ishiguro, M. (2021) "Thermal radiation pressure as a possible mechanism for losing small particles on asteroids", A&A, under review
+
 
 
 ## Contents
