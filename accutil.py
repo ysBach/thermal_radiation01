@@ -1,4 +1,4 @@
-'''
+"""
 This is a collection of convenience functions for my specific purpose.
 Most likely you have to write your very own convenience functions or
 classes for your purposes.
@@ -6,8 +6,8 @@ classes for your purposes.
 If you want, you may just freely use the snippets in this file.
 **BUT if you do so, please make your codes be freely available for
 public as these codes are!**
-That's the only restriction.
-'''
+That"s the only restriction.
+"""
 from pathlib import Path
 
 import numpy as np
@@ -26,8 +26,9 @@ from scipy.interpolate import UnivariateSpline as USP
 import yssbtmpy as tm
 
 __all__ = ["QPRDIR", "CHEMDICT", "EPHEMPATH",
+           "COLATS_PLOT", "PHASES_PLOT", "EXTENTS",
            "PHYS_PHAE", "PHYS_PHAE_UP",
-           "wrap_180180_to_000360", "wrap_000360_to_180180",
+           "wrap_180180_to_000360", "wrap_000360_to_180180", "spl_temp_plot",
            "QprbarSunSpline", "QprbarSpline",
            "set_spl", "set_particle", "calc_traj",
            "set_phaethon", "set_phaethon_up", "set_perpmodel",
@@ -41,6 +42,10 @@ QPRDIR = Path("./data/Qpr")
 CHEMDICT = dict(oliv="Olivine", mag="Magnetite")
 CHEMID = dict(ones=0, oliv=1, mag=2)
 EPHEMPATH = Path("./phae_ephem.csv")
+COLATS_PLOT = np.linspace(0, 180, 1000)
+PHASES_PLOT = np.linspace(0, 360, 1000)
+EXTENTS = (PHASES_PLOT.min(), PHASES_PLOT.max()+1,
+           COLATS_PLOT.min(), COLATS_PLOT.max()+1)  # Must be used with origin="lower"
 
 # HanusJ+2018 A&A 620 L8
 PHYS_PHAE = dict(spin_ecl_lon=318*u.deg, spin_ecl_lat=-47*u.deg,
@@ -71,6 +76,10 @@ def wrap_000360_to_180180(x):
     return (x + 180) % 360 - 180              # [0, 360) to [-180, +180)
 
 
+def spl_temp_plot(sb, colats=COLATS_PLOT, phases=PHASES_PLOT):
+    return sb.temp_eqm.value*sb.spl_uarr(colats, phases)
+
+
 class QprbarSunSpline:
     def __init__(self, fpath):
         rawdata = pd.read_csv(fpath)
@@ -98,12 +107,12 @@ class QprbarSpline:
 
 def set_spl(fpath=EPHEMPATH):
     if not Path(fpath).exists():
-        epoch_ref = Time(2456049.8189178086, format='jd')
+        epoch_ref = Time(2456049.8189178086, format="jd")
         # perihelion: 2012-05-02T07:39:14.499
         epochs_peri = epoch_ref + np.arange(-5, +5, 0.1) * u.day
         epochs_long = dict(start=(epoch_ref - 300.01*u.day).isot,
                            stop=(epoch_ref + 300.01*u.day).isot,
-                           step='1d')
+                           step="1d")
         obj_peri = Horizons(id=3200, epochs=epochs_peri.jd)
         obj_long = Horizons(id=3200, epochs=epochs_long)
         eph_peri = obj_peri.ephemerides()
@@ -140,13 +149,16 @@ def set_spl(fpath=EPHEMPATH):
                 alpha=spl_alpha)
 
 
-def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180, ti_rh_correct=False,
-                 fpath=EPHEMPATH):
+def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180, Zmax=10, dZ=0.2, emissivity=PHYS_PHAE["emissivity"],
+                 spin_ecl_lon=PHYS_PHAE["spin_ecl_lon"], spin_ecl_lat=PHYS_PHAE["spin_ecl_lat"],
+                 rot_period=PHYS_PHAE["rot_period"], slope_par=PHYS_PHAE["slope_par"],
+                 diam_eff=PHYS_PHAE["diam_eff"], p_vis=PHYS_PHAE["p_vis"],
+                 bulk_mass_den=PHYS_PHAE["bulk_mass_den"], ti_rh_correct=False, fpath=EPHEMPATH):
     spl = set_spl()
     r_hel = spl["rh"](true_anom)
     if ti_rh_correct:
         ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
-        
+
     # Just in case it is in -180~+180 notation:
     true_anom = wrap_180180_to_000360(true_anom)
     sb = tm.SmallBody()
@@ -160,55 +172,25 @@ def set_phaethon(true_anom=0, ti=600, nlon=360, nlat=180, ti_rh_correct=False,
                alpha=spl["alpha"](true_anom)
                )
 
-    sb.set_spin(spin_ecl_lon=PHYS_PHAE["spin_ecl_lon"],
-                spin_ecl_lat=PHYS_PHAE["spin_ecl_lat"],
-                rot_period=PHYS_PHAE["rot_period"])
-    sb.set_optical(slope_par=PHYS_PHAE["slope_par"],
-                   diam_eff=PHYS_PHAE["diam_eff"],
-                   p_vis=PHYS_PHAE["p_vis"])
-    sb.set_mass(diam_eff=PHYS_PHAE["diam_eff"],
-                bulk_mass_den=PHYS_PHAE["bulk_mass_den"])
-    sb.set_thermal(ti=ti, emissivity=PHYS_PHAE["emissivity"])
-    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=10, nZ=50)
+    sb.set_spin(spin_ecl_lon=spin_ecl_lon, spin_ecl_lat=spin_ecl_lat, rot_period=rot_period)
+    sb.set_optical(slope_par=slope_par, diam_eff=diam_eff, p_vis=p_vis)
+    sb.set_mass(diam_eff=diam_eff, bulk_mass_den=bulk_mass_den)
+    sb.set_thermal(ti=ti, emissivity=emissivity)
+    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=Zmax, dZ=dZ)
     return sb
 
 
-def set_phaethon_up(true_anom=0, ti=600, nlon=360, nlat=180, ti_rh_correct=False,
-                    fpath=EPHEMPATH):
-    spl = set_spl()
-    r_hel = spl["rh"](true_anom)
-    if ti_rh_correct:
-        ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
-        
-    # Just in case it is in -180~+180 notation:
-    true_anom = wrap_180180_to_000360(true_anom)
-    sb = tm.SmallBody()
-    sb.id = 3200
-    sb.set_ecl(r_hel=r_hel,
-               hel_ecl_lon=spl["hlon"](true_anom),
-               hel_ecl_lat=spl["hlat"](true_anom),
-               r_obs=spl["ro"](true_anom),  # dummy....
-               obs_ecl_lon=spl["olon"](true_anom),
-               obs_ecl_lat=spl["olat"](true_anom),
-               alpha=spl["alpha"](true_anom)
-               )
-
-    sb.set_spin(spin_ecl_lon=PHYS_PHAE_UP["spin_ecl_lon"],
-                spin_ecl_lat=PHYS_PHAE_UP["spin_ecl_lat"],
-                rot_period=PHYS_PHAE_UP["rot_period"])
-    sb.set_optical(slope_par=PHYS_PHAE_UP["slope_par"],
-                   diam_eff=PHYS_PHAE_UP["diam_eff"],
-                   p_vis=PHYS_PHAE_UP["p_vis"])
-    sb.set_mass(diam_eff=PHYS_PHAE_UP["diam_eff"],
-                bulk_mass_den=PHYS_PHAE_UP["bulk_mass_den"])
-    sb.set_thermal(ti=ti, emissivity=PHYS_PHAE_UP["emissivity"])
-    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=10, nZ=50)
-    return sb
+def set_phaethon_up(true_anom=0, ti=600, nlon=360, nlat=180, Zmax=10, dZ=0.2,
+                    emissivity=PHYS_PHAE_UP["emissivity"], spin_ecl_lon=PHYS_PHAE_UP["spin_ecl_lon"],
+                    spin_ecl_lat=PHYS_PHAE_UP["spin_ecl_lat"], rot_period=PHYS_PHAE_UP["rot_period"],
+                    slope_par=PHYS_PHAE_UP["slope_par"], diam_eff=PHYS_PHAE_UP["diam_eff"],
+                    p_vis=PHYS_PHAE_UP["p_vis"], bulk_mass_den=PHYS_PHAE_UP["bulk_mass_den"],
+                    ti_rh_correct=False, fpath=EPHEMPATH):
+    return set_phaethon(**locals())
 
 
-def set_perpmodel(diam_eff, rot_period, r_hel=0.2, ti_rh_correct=False,
-                  a_bond=0.1, ti=200, bulk_mass_den=2000, emissivity=0.90,
-                  nlon=360, nlat=180):
+def set_perpmodel(diam_eff, rot_period, r_hel=0.2, ti_rh_correct=False, a_bond=0.05, ti=200,
+                  bulk_mass_den=2000, emissivity=0.90, nlon=360, nlat=180, Zmax=10, dZ=0.2):
     if ti_rh_correct:
         ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
 
@@ -217,17 +199,15 @@ def set_perpmodel(diam_eff, rot_period, r_hel=0.2, ti_rh_correct=False,
     sb = tm.SmallBody()
     sb.set_ecl(r_hel=r_hel, hel_ecl_lon=0, hel_ecl_lat=0, **dummies)
     sb.set_spin(spin_ecl_lon=0, spin_ecl_lat=90, rot_period=rot_period)
-    sb.set_optical(slope_par=0, a_bond=a_bond, diam_eff=diam_eff,
-                   p_vis=tm.AG2p(a_bond, 0))
+    sb.set_optical(slope_par=0, a_bond=a_bond, diam_eff=diam_eff, p_vis=tm.AG2p(a_bond, 0))
     sb.set_mass(diam_eff=diam_eff, bulk_mass_den=bulk_mass_den)
     sb.set_thermal(ti=ti, emissivity=emissivity)
-    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=10, nZ=50)
+    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=Zmax, dZ=dZ)
     return sb
 
 
-def set_model_aspect(diam_eff, rot_period, aspect_deg=90, r_hel=0.2, ti_rh_correct=False,
-                     a_bond=0.1, ti=200, bulk_mass_den=2000, emissivity=0.90,
-                     nlon=360, nlat=180):
+def set_model_aspect(diam_eff, rot_period, aspect_deg=90, r_hel=0.2, ti_rh_correct=False, a_bond=0.05, ti=200,
+                     bulk_mass_den=2000, emissivity=0.90, nlon=360, nlat=180, Zmax=10, dZ=0.2):
     if ti_rh_correct:
         ti = ti*r_hel**(-3/4)  # See Delbo+2015 Asteroids IV
     dummies = dict(r_obs=1, obs_ecl_lon=0, obs_ecl_lat=0, alpha=0)
@@ -235,18 +215,15 @@ def set_model_aspect(diam_eff, rot_period, aspect_deg=90, r_hel=0.2, ti_rh_corre
     sb = tm.SmallBody()
     sb.set_ecl(r_hel=r_hel, hel_ecl_lon=0, hel_ecl_lat=0, **dummies)
     sb.set_spin(spin_ecl_lon=0, spin_ecl_lat=aspect_deg, rot_period=rot_period)
-    sb.set_optical(slope_par=0, a_bond=a_bond, diam_eff=diam_eff,
-                   p_vis=tm.AG2p(a_bond, 0))
+    sb.set_optical(slope_par=0, a_bond=a_bond, diam_eff=diam_eff, p_vis=tm.AG2p(a_bond, 0))
     sb.set_mass(diam_eff=diam_eff, bulk_mass_den=bulk_mass_den)
     sb.set_thermal(ti=ti, emissivity=emissivity)
-    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=10, nZ=50)
+    sb.set_tpm(nlon=nlon, nlat=nlat, Zmax=Zmax, dZ=dZ)
     return sb
 
 
-def set_particle(smallbody, radius_um, chem, init_th, init_ph,
-                 Qprbar_sun=None, Qprbar_ther=None,
-                 init_height=1*u.cm, mass_den=3000*u.kg/u.m**3,
-                 r0_radius=0.01, vec_vel_init=None):
+def set_particle(smallbody, radius_um, chem, init_th, init_ph, Qprbar_sun=None, Qprbar_ther=None,
+                 init_height=1*u.cm, mass_den=3000*u.kg/u.m**3, r0_radius=0.01, vec_vel_init=None):
     # Splining Qprbar is the most time-consuming part (~ 20ms)
     # compared to all others (< 1ms), so better to give a priori if possible.
     if Qprbar_sun is None:
@@ -259,20 +236,16 @@ def set_particle(smallbody, radius_um, chem, init_th, init_ph,
                                  mass_den=mass_den,
                                  r0_radius=r0_radius)
 
-    particle.set_func_Qprbar(func_Qprbar=Qprbar_ther.get_value,
-                             func_Qprbar_sun=Qprbar_sun.get_value)
-    particle.set_initial_pos(init_th, init_ph,
-                             height=init_height, vec_vel_init=vec_vel_init)
+    particle.set_func_Qprbar(func_Qprbar=Qprbar_ther.get_value, func_Qprbar_sun=Qprbar_sun.get_value)
+    particle.set_initial_pos(init_th, init_ph, height=init_height, vec_vel_init=vec_vel_init)
     return particle
 
 
-def calc_traj(chem, radius, sb, init_th, init_ph, max_h_step, nstep=None,
-              min_height=0.1*u.cm, init_height=1*u.cm, r0_radius=0.01,
-              vec_vel_init=None,
-              mass_den=3000*u.kg/u.m**3, dt=0.1, return_halt_code=False):
+def calc_traj(chem, radius, sb, init_th, init_ph, max_h_step, nstep=None, min_height=0.1*u.cm,
+              init_height=1*u.cm, r0_radius=0.01, vec_vel_init=None, mass_den=3000*u.kg/u.m**3, dt=0.1,
+              return_halt_code=False):
     particle = set_particle(sb, radius, chem, init_th, init_ph,
-                            init_height=init_height, mass_den=mass_den,
-                            r0_radius=r0_radius,
+                            init_height=init_height, mass_den=mass_den, r0_radius=r0_radius,
                             vec_vel_init=vec_vel_init)
     sb_GM = tm.GG * sb.mass.to(u.kg).value
 
@@ -281,14 +254,14 @@ def calc_traj(chem, radius, sb, init_th, init_ph, max_h_step, nstep=None,
     halt_code_str_2 = None
     if max_h_step is not None:
         while True:
-            PROP_KW = dict(dt=dt, verbose=False, nstep=nstep,
-                           min_height=min_h, max_height=max_h)
-            particle.propagate(**PROP_KW)
-            if particle.halt_code_str == 'max_height':
+            particle.propagate(dt=dt, verbose=False, nstep=nstep, min_height=min_h, max_height=max_h)
+            if particle.halt_code_str == "max_height":
                 r = particle.trace_pos_sph[-1][0]
                 pos_last = particle.trace_pos_xyz[-1]
                 # phi_last = particle.trace_pos_sph[-1][2]
                 # phi_init = particle.trace_pos_sph[0][2]
+                # lonchanged: If initially at East but ended with West (or vice versa)
+                lonchanged = np.abs(init_ph//180 - particle.trace_pos_sph[-1][2]//180) > 0.1
                 vel_last = particle.trace_vel_xyz[-1]
                 h_last = particle.trace_height[-1]
                 vel_esc = np.sqrt(2*sb_GM/r)
@@ -298,35 +271,35 @@ def calc_traj(chem, radius, sb, init_th, init_ph, max_h_step, nstep=None,
                 # vel_x > vel_esc && pos_x > 0 (night hemisphere)
                 # if (vel_last[0] > vel_esc) and (pos_last[0] > 0):
                 if np.linalg.norm(vel_last*pos_last)/np.linalg.norm(pos_last) > vel_esc:
-                    halt_code_str_2 = 'escape'
-                    # particle.halt_code_str = 'escape'
+                    halt_code_str_2 = "escape"
+                    # particle.halt_code_str = "escape"
                     break
                 elif t_last > dt*nstep:
-                    halt_code_str_2 = 'max_time'
+                    halt_code_str_2 = "max_time"
                     # particle.halt_code = 4
-                    # particle.halt_code_str = 'max_time'
+                    # particle.halt_code_str = "max_time"
                     break
                 # elif abs(phi_init - phi_last) > 90:
-                #     halt_code_str_2 = 'oscillation'
+                #     halt_code_str_2 = "oscillation"
                 #     break
+                elif lonchanged:
+                    halt_code_str_2 = "oscillation"
+                    break
                 else:
                     max_h += max_h_step
-                    min_h = max(min_height.to(u.m).value,
-                                h_last - max_h_step.to(u.m).value)
-            elif particle.halt_code_str == 'min_height':
+                    min_h = max(min_height.to(u.m).value, h_last - max_h_step.to(u.m).value)
+            elif particle.halt_code_str == "min_height":
                 h_last = particle.trace_height[-1]
                 if h_last > min_height.to(u.m).value:
-                    halt_code_str_2 = 'oscillation'
+                    halt_code_str_2 = "oscillation"
                 else:
-                    halt_code_str_2 = 'min_height'
+                    halt_code_str_2 = "min_height"
                 break
             else:
-                halt_code_str_2 = 'none'
+                halt_code_str_2 = "none"
                 break
     else:
-        PROP_KW = dict(dt=dt, verbose=False, nstep=nstep,
-                       min_height=min_height, max_height=None)
-        particle.propagate(**PROP_KW)
+        particle.propagate(dt=dt, verbose=False, nstep=nstep, min_height=min_height, max_height=None)
 
     particle.wrapup()
     if return_halt_code:
@@ -372,36 +345,28 @@ def ax_tick(ax, x_vals=None, x_show=None, y_vals=None, y_show=None):
 
 
 def znorm(image, stretch=LinearStretch(), **kwargs):
-    return ImageNormalize(image,
-                          interval=ZScaleInterval(**kwargs),
-                          stretch=stretch)
+    return ImageNormalize(image, interval=ZScaleInterval(**kwargs), stretch=stretch)
 
 
 def zimshow(ax, image, stretch=LinearStretch(), cmap=None, **kwargs):
-    im = ax.imshow(image,
-                   norm=znorm(image, stretch=stretch, **kwargs),
-                   origin='lower',
-                   cmap=cmap)
+    im = ax.imshow(image, norm=znorm(image, stretch=stretch, **kwargs), origin="lower", cmap=cmap)
     return im
 
 
-def norm_imshow(ax, data, stretch='linear', power=1.0, asinh_a=0.1,
-                min_cut=None, max_cut=None, min_percent=None, max_percent=None,
-                percent=None, clip=True, log_a=1000, **kwargs):
+def norm_imshow(ax, data, stretch="linear", power=1.0, asinh_a=0.1, min_cut=None, max_cut=None,
+                min_percent=None, max_percent=None, percent=None, clip=True, log_a=1000, **kwargs):
     """ Do normalization and do imshow
     """
-    norm = simple_norm(data, stretch=stretch, power=power, asinh_a=asinh_a,
-                       min_cut=min_cut, max_cut=max_cut,
-                       min_percent=min_percent, max_percent=max_percent,
-                       percent=percent, clip=clip, log_a=log_a)
-    im = ax.imshow(data, norm=norm, origin='lower', **kwargs)
+    norm = simple_norm(
+        data, stretch=stretch, power=power, asinh_a=asinh_a, min_cut=min_cut, max_cut=max_cut,
+        min_percent=min_percent, max_percent=max_percent, percent=percent, clip=clip, log_a=log_a
+    )
+    im = ax.imshow(data, norm=norm, origin="lower", **kwargs)
     return im
 
 
-def colorbaring(fig, ax, im, fmt="%.0f", orientation='horizontal',
-                formatter=FormatStrFormatter, **kwargs):
-    cb = fig.colorbar(im, ax=ax, orientation=orientation,
-                      format=FormatStrFormatter(fmt), **kwargs)
+def colorbaring(fig, ax, im, fmt="%.0f", orientation="horizontal", formatter=FormatStrFormatter, **kwargs):
+    cb = fig.colorbar(im, ax=ax, orientation=orientation, format=FormatStrFormatter(fmt), **kwargs)
 
     return cb
 
@@ -417,21 +382,18 @@ def mplticker(ax_list,
               ymajlockws=None, yminlockws=None,
               xmajfmtkws=None, xminfmtkws=None,
               ymajfmtkws=None, yminfmtkws=None,
-              xmajgridkws=dict(ls='-', alpha=0.5),
-              xmingridkws=dict(ls=':', alpha=0.5),
-              ymajgridkws=dict(ls='-', alpha=0.5),
-              ymingridkws=dict(ls=':', alpha=0.5)):
-    ''' Set tickers of Axes objects.
+              xmajgridkws=dict(ls="-", alpha=0.5),
+              xmingridkws=dict(ls=":", alpha=0.5),
+              ymajgridkws=dict(ls="-", alpha=0.5),
+              ymingridkws=dict(ls=":", alpha=0.5)):
+    """ Set tickers of Axes objects.
     Note
     ----
-    Notation of arguments is <axis><which><name>. <axis> can be ``x`` or
-    ``y``, and <which> can be ``major`` or ``minor``.
-    For example, ``xmajlocators`` is the Locator object for x-axis
-    major.  ``kw`` means the keyword arguments that will be passed to
-    locator, formatter, or grid.
-    If a single object is given for locators, formatters, grid, or kw
-    arguments, it will basically be copied by the number of Axes objects
-    and applied identically through all the Axes.
+    Notation of arguments is <axis><which><name>. <axis> can be ``x`` or ``y``, and <which> can be
+    ``major`` or ``minor``. For example, ``xmajlocators`` is the Locator object for x-axis major.
+    ``kw`` means the keyword arguments that will be passed to locator, formatter, or grid.
+    If a single object is given for locators, formatters, grid, or kw arguments, it will basically be
+    copied by the number of Axes objects and applied identically through all the Axes.
 
     Parameters
     ----------
@@ -439,51 +401,40 @@ def mplticker(ax_list,
         The Axes object(s).
 
     locators : Locator, None, list of such, optional
-        The Locators used for the ticker. Must be a single Locator
-        object or a list of such with the identical length of
-        ``ax_list``.
-        If ``None``, the default locator is not touched.
+        The Locators used for the ticker. Must be a single Locator object or a list of such with the
+        identical length of ``ax_list``.
+        If `None`, the default locator is not touched.
 
     formatters : Formatter, None, False, array-like of such, optional
-        The Formatters used for the ticker. Must be a single Formatter
-        object or an array-like of such with the identical length of
-        ``ax_list``.
-        If ``None``, the default formatter is not touched.
-        If ``False``, the labels are not shown (by using the trick
-        ``FormatStrFormatter(fmt="")``).
+        The Formatters used for the ticker. Must be a single Formatter object or an array-like of such
+        with the identical length of ``ax_list``.
+        If `None`, the default formatter is not touched.
+        If `False`, the labels are not shown (by using the trick ``FormatStrFormatter(fmt="")``).
 
     grids : bool, array-like of such, optinoal.
-        Whether to draw the grid lines. Must be a single bool object or
-        an array-like of such with the identical length of ``ax_list``.
+        Whether to draw the grid lines. Must be a single bool object or an array-like of such with the
+        identical length of ``ax_list``.
 
     lockws : dict, array-like of such, array-like, optional
-        The keyword arguments that will be passed to the ``locators``.
-        If it's an array-like but elements are not dict, it is
-        interpreted as ``*args`` passed to locators.
-        If it is (or contains) dict, it must be a single dict object or
-        an array-like object of such with the identical length of
-        ``ax_list``.
-        Set as empty dict (``{}``) if you don't want to change the
-        default arguments.
+        The keyword arguments that will be passed to the ``locators``. If it"s an array-like but
+        elements are not dict, it is interpreted as ``*args`` passed to locators.
+        If it is (or contains) dict, it must be a single dict object or an array-like object of such
+        with the identical length of ``ax_list``.
+        Set as empty dict (``{}``) if you don"t want to change the default arguments.
 
     fmtkws : dict, str, list of such, optional
-        The keyword arguments that will be passed to the ``formatters``.
-        If it's an array-like but elements are not dict, it is
-        interpreted as ``*args`` passed to formatters.
-        If it is (or contains) dict, it must be a single dict object or
-        an array-like object of such with the identical length of
-        ``ax_list``.
-        Set as empty dict (``{}``) if you don't want to change the
-        default arguments.
+        The keyword arguments that will be passed to the ``formatters``. If it"s an array-like but
+        elements are not dict, it is interpreted as ``*args`` passed to formatters.
+        If it is (or contains) dict, it must be a single dict object or an array-like object of such
+        with the identical length of ``ax_list``.
+        Set as empty dict (``{}``) if you don"t want to change the default arguments.
 
     gridkw : dict, list of such, optional
-        The keyword arguments that will be passed to the grid. Must be a
-        single dict object or a list of such with the identical length
-        of ``ax_list``.
-        Set as empty dict (``{}``) if you don't want to change the
-        default arguments.
+        The keyword arguments that will be passed to the grid. Must be a single dict object or a list
+        of such with the identical length of ``ax_list``.
+        Set as empty dict (``{}``) if you don"t want to change the default arguments.
 
-    '''
+    """
     def _check(obj, name, n):
         arr = np.atleast_1d(obj)
         n_arr = arr.shape[0]
@@ -496,7 +447,7 @@ def mplticker(ax_list,
         return newarr
 
     def _setter(setter, Setter, kw):
-        # don't do anything if obj (Locator or Formatter) is None:
+        # don"t do anything if obj (Locator or Formatter) is None:
         if (Setter is not None) and (kw is not None):
 
             # matplotlib is so poor in log plotting....
@@ -589,13 +540,13 @@ def mplticker(ax_list,
         # Strangely, using ``b=_xmingrid`` does not work if it is
         # False... I had to do it manually like this... OMG matplotlib..
         if _xmajgrid:
-            aa.grid(axis='x', which='major', **_xmajgridkw)
+            aa.grid(axis="x", which="major", **_xmajgridkw)
         if _xmingrid:
-            aa.grid(axis='x', which='minor', **_xmingridkw)
+            aa.grid(axis="x", which="minor", **_xmingridkw)
         if _ymajgrid:
-            aa.grid(axis='y', which='major', **_ymajgridkw)
+            aa.grid(axis="y", which="major", **_ymajgridkw)
         if _ymingrid:
-            aa.grid(axis='y', which='minor', **_ymingridkw)
+            aa.grid(axis="y", which="minor", **_ymingridkw)
 
 
 def linticker(ax_list,
@@ -611,10 +562,10 @@ def linticker(ax_list,
               ymajlockws=None, yminlockws=None,
               xmajfmtkws=None, xminfmtkws={},
               ymajfmtkws=None, yminfmtkws={},
-              xmajgridkws=dict(ls='-', alpha=0.5),
-              xmingridkws=dict(ls=':', alpha=0.5),
-              ymajgridkws=dict(ls='-', alpha=0.5),
-              ymingridkws=dict(ls=':', alpha=0.5)):
+              xmajgridkws=dict(ls="-", alpha=0.5),
+              xmingridkws=dict(ls=":", alpha=0.5),
+              ymajgridkws=dict(ls="-", alpha=0.5),
+              ymingridkws=dict(ls=":", alpha=0.5)):
     mplticker(**locals())
 
 
@@ -631,10 +582,10 @@ def logticker(ax_list,
               ymajlockws=None, yminlockws=None,
               xmajfmtkws=None, xminfmtkws={},
               ymajfmtkws=None, yminfmtkws={},
-              xmajgridkws=dict(ls='-', alpha=0.5),
-              xmingridkws=dict(ls=':', alpha=0.5),
-              ymajgridkws=dict(ls='-', alpha=0.5),
-              ymingridkws=dict(ls=':', alpha=0.5)):
+              xmajgridkws=dict(ls="-", alpha=0.5),
+              xmingridkws=dict(ls=":", alpha=0.5),
+              ymajgridkws=dict(ls="-", alpha=0.5),
+              ymingridkws=dict(ls=":", alpha=0.5)):
     mplticker(**locals())
 
 
@@ -651,10 +602,10 @@ def logxticker(ax_list,
                ymajlockws=None, yminlockws=None,
                xmajfmtkws=None, xminfmtkws={},
                ymajfmtkws=None, yminfmtkws={},
-               xmajgridkws=dict(ls='-', alpha=0.5),
-               xmingridkws=dict(ls=':', alpha=0.5),
-               ymajgridkws=dict(ls='-', alpha=0.5),
-               ymingridkws=dict(ls=':', alpha=0.5)):
+               xmajgridkws=dict(ls="-", alpha=0.5),
+               xmingridkws=dict(ls=":", alpha=0.5),
+               ymajgridkws=dict(ls="-", alpha=0.5),
+               ymingridkws=dict(ls=":", alpha=0.5)):
     mplticker(**locals())
 
 
@@ -671,8 +622,8 @@ def logyticker(ax_list,
                ymajlockws=None, yminlockws=None,
                xmajfmtkws=None, xminfmtkws={},
                ymajfmtkws=None, yminfmtkws={},
-               xmajgridkws=dict(ls='-', alpha=0.5),
-               xmingridkws=dict(ls=':', alpha=0.5),
-               ymajgridkws=dict(ls='-', alpha=0.5),
-               ymingridkws=dict(ls=':', alpha=0.5)):
+               xmajgridkws=dict(ls="-", alpha=0.5),
+               xmingridkws=dict(ls=":", alpha=0.5),
+               ymajgridkws=dict(ls="-", alpha=0.5),
+               ymingridkws=dict(ls=":", alpha=0.5)):
     mplticker(**locals())
