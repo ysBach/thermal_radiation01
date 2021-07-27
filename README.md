@@ -74,6 +74,7 @@ Nature Communications:
 * 2021-05-12: Editor assigned
 * 2021-05-21: All (three) reviewers assigned
 * 2020-06-08: Review completed (1 recommended publication, 2 rejected)
+  * Decision: REJECTION
 
 Astronomy & Astrophysics:
 
