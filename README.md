@@ -83,3 +83,5 @@ Astronomy & Astrophysics:
 * 2021-06-02: Second submission
 * 2021-07-21: Second review letter received
 * 2021-07-23: Third submission
+* 2021-07-23: Accepted for publication
+* 
