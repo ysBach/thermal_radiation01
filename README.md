@@ -58,31 +58,38 @@ You may make a virture environment using, e.g., conda, ``conda create -n thermal
 
 ## Timeline
 
-* Idea contrived in circa 2017. 
+Dates below are in Korean Standard Time.
 
+* Idea contrived in circa 2017. 
 * First conference presentation at [IDP 2019](http://www.perc.it-chiba.ac.jp/meetings/IDP2019/Scientific_Program.html) (2019-02-13)
 
-Nature Astronomy:
+* **Nature Astronomy**:
+  * 2020-04-21: Submitted
+  * 2020-04-23: Editor assigned
+  * 2020-04-27: Editor declined the paper
 
-* 2020-04-21: Submitted
-* 2020-04-23: Editor assigned
-* 2020-04-27: Editor declined the paper
+* **Nature Communications**:
+  * 2021-05-05: Submitted (transferred from NatAs)
+  * 2021-05-12: Editor assigned
+  * 2021-05-21: All (three) reviewers assigned
+  * 2020-06-08: Review completed (1 recommended publication, 2 rejected)
+    * Decision: REJECTION
 
-Nature Communications:
-
-* 2021-05-05: Submitted (transferred from NatAs)
-* 2021-05-12: Editor assigned
-* 2021-05-21: All (three) reviewers assigned
-* 2020-06-08: Review completed (1 recommended publication, 2 rejected)
-  * Decision: REJECTION
-
-Astronomy & Astrophysics:
-
-* 2020-12-28: Initial submission
-* 2021-01-11: Draft sent to referee
-* 2021-02-21: First review letter received
-* 2021-06-02: Second submission
-* 2021-07-21: Second review letter received
-* 2021-07-23: Third submission
-* 2021-07-23: Accepted for publication
-* 
+* **Astronomy & Astrophysics**:
+  * 2020-12-28: Initial submission
+  * 2021-01-11: Draft sent to referee
+  * 2021-02-21~2021-07-03: **Review**
+    * 2021-02-21: First review letter received
+    * 2021-06-02: Second submission
+    * 2021-07-21: Second review letter received
+    * 2021-07-23: Third submission
+    * 2021-07-23: Accepted for publication
+  * 2021-08-03~2021-08-05: Language editor
+    * 2021-08-03: First comment received
+    * 2021-08-03: Re-submitted with correction
+    * 2021-08-05: Second comment received
+    * 2021-08-06: Re-submitted with correction
+  * 2021-08-09: v1 available from [arXiv (2108.03898)](https://arxiv.org/abs/2108.03898)
+  * 2021-10-06~2021-10-09?: Final proof
+    * 2021-10-06: Proof (publisher form) received with "Author Query"
+    * 2021-10-08: Answers to the query and requested minor corrections (typos).
