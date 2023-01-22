@@ -4,9 +4,30 @@
 
 This is a repo related to the following work:
 
-> Bach, Y. P. & Ishiguro, M. (2021) "Thermal radiation pressure as a possible mechanism for losing small particles on asteroids", A&A, under review
+> Bach, Y. P. & Ishiguro, M. (2021) "Thermal radiation pressure as a possible mechanism for losing small particles on asteroids", A&A, 654, 113.
 
+[ADS](https://ui.adsabs.harvard.edu/abs/2021A%26A...654A.113B/abstract)
 
+**Citation**:
+```
+@ARTICLE{2021A&A...654A.113B,
+       author = {{Bach}, Yoonsoo P. and {Ishiguro}, Masateru},
+        title = "{Thermal radiation pressure as a possible mechanism for losing small particles on asteroids}",
+      journal = {\aap},
+     keywords = {minor planets, asteroids: general, asteroids: individual: 3200 Phaethon, meteorites, meteors, meteoroids, interplanetary medium, Astrophysics - Earth and Planetary Astrophysics},
+         year = 2021,
+        month = oct,
+       volume = {654},
+          eid = {A113},
+        pages = {A113},
+          doi = {10.1051/0004-6361/202040151},
+archivePrefix = {arXiv},
+       eprint = {2108.03898},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2021A&A...654A.113B},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+```
 
 ## Contents
 
@@ -42,8 +63,8 @@ For the first option, you are free to go ahead. For the second option, download 
 * python 3.6+
 * matplotlib
 * scipy
-* numpy 
-* pandas 
+* numpy
+* pandas
 * astropy
 * xarray
   * install netcdf4 by ``conda install -c conda-forge netcdf4 --yes``
@@ -60,7 +81,7 @@ You may make a virture environment using, e.g., conda, ``conda create -n thermal
 
 Dates below are in Korean Standard Time.
 
-* Idea contrived in circa 2017. 
+* Idea contrived in circa 2017.
 * First conference presentation at [IDP 2019](http://www.perc.it-chiba.ac.jp/meetings/IDP2019/Scientific_Program.html) (2019-02-13)
 
 * **Nature Astronomy**:
@@ -90,6 +111,8 @@ Dates below are in Korean Standard Time.
     * 2021-08-05: Second comment received
     * 2021-08-06: Re-submitted with correction
   * 2021-08-09: v1 available from [arXiv (2108.03898)](https://arxiv.org/abs/2108.03898)
-  * 2021-10-06~2021-10-09?: Final proof
+  * 2021-10-06: Final proof
     * 2021-10-06: Proof (publisher form) received with "Author Query"
     * 2021-10-08: Answers to the query and requested minor corrections (typos).
+    * 2021-10-15: Additional simple correction
+    * 2021-10-21: Final publication.
