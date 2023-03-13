@@ -3,10 +3,6 @@ This is a collection of convenience functions for my specific purpose.
 Most likely you have to write your very own convenience functions or
 classes for your purposes.
 
-If you want, you may just freely use the snippets in this file.
-**BUT if you do so, please make your codes be freely available for
-public as these codes are!**
-That"s the only restriction.
 """
 from pathlib import Path
 
