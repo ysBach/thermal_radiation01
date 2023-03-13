@@ -52,11 +52,20 @@ archivePrefix = {arXiv},
 At this stage, the output data from ``04-accplot.ipynb`` (all the ``.nc`` files) are available either
 
 1. you can make it from the code at ``04-accplot.ipynb``, or
-2. via figshare (doi: 10.6084/m9.figshare.12044883) - **not published yet -- will be published as soon as the paper is accepted**.
+2. via figshare (doi: 10.6084/m9.figshare.12044883)
 
 For the first option, you are free to go ahead. For the second option, download it, unzip it, and put two ``*.nc`` files (except thos indicated by ``bck``, which means "backup") to ``data/`` directory.
 
 
+### NOTE
+You may encounter ``NameError: name 'InteractiveShell' is not defined``. Please add these lines at the top of the notebooks to avoid this:
+
+```python
+# %matplotlib notebook
+%config InlineBackend.figure_format = 'retina'
+from IPython.core.interactiveshell import InteractiveShell
+InteractiveShell.ast_node_interactivity = 'last_expr'
+```
 
 ### Requirements
 
@@ -70,6 +79,8 @@ For the first option, you are free to go ahead. For the second option, download 
   * install netcdf4 by ``conda install -c conda-forge netcdf4 --yes``
 * numba
   * ``yssbtmpy_ana2021`` requires numba for TPM calculation.
+* astroquery
+  * ``gh repo clone astropy/astroquery && cd astroquery && pip install -e .``
 
 You may make a virture environment using, e.g., conda, ``conda create -n thermal_ana2021 matplotlib scipy numpy pandas astropy xarray netcdf4 numba`` and then ``conda activate thermal_ana2021``. You may have to specify versions of packages.
 
