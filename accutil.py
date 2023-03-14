@@ -19,7 +19,7 @@ from matplotlib.ticker import (FormatStrFormatter, LogFormatterSciNotation,
 from scipy.interpolate import RectBivariateSpline
 from scipy.interpolate import UnivariateSpline as USP
 
-import yssbtmpy as tm
+import yssbtmpy_ana2021 as tm
 
 __all__ = ["QPRDIR", "CHEMDICT", "EPHEMPATH",
            "COLATS_PLOT", "PHASES_PLOT", "EXTENTS",
