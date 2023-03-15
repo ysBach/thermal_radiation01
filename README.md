@@ -27,6 +27,8 @@ archivePrefix = {arXiv},
 }
 ```
 
+I also thank Toshi Kasuga (at NAOJ as of Mar 2023) for checking the reproducibility of the notebooks. 
+
 ## Contents
 
 **nbviewer [here](https://nbviewer.jupyter.org/github/ysbach/thermal_radiation01/tree/master/).**
